@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bepack.dev/schemas/release-record.schema.json",
+  "title": "BePack immutable release record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "pack_id", "version", "version_set", "mode", "name", "description",
+    "author", "license", "package_schema_version", "repository", "release", "package",
+    "manifest", "descriptor", "scan_report", "targets", "executables", "verification", "evidence"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "pack_id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)+$", "maxLength": 128 },
+    "version": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+    "version_set": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+    "mode": { "enum": ["full", "modded", "client", "mods-only"] },
+    "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "description": { "type": "string", "maxLength": 10000 },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "url": { "type": "string", "pattern": "^https://" },
+        "email": { "type": "string", "maxLength": 254 }
+      }
+    },
+    "license": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "package_schema_version": { "const": 1 },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "full_name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+        "full_name": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "tag", "commit", "published_at", "url"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+        "tag": { "type": "string", "pattern": "^v" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "published_at": { "type": "string", "format": "date-time" },
+        "url": { "type": "string", "pattern": "^https://" }
+      }
+    },
+    "package": { "$ref": "#/$defs/asset" },
+    "manifest": { "$ref": "#/$defs/asset" },
+    "descriptor": { "$ref": "#/$defs/asset" },
+    "scan_report": { "$ref": "#/$defs/asset" },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "executables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["subject", "sha256", "size"],
+        "properties": {
+          "subject": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "size": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_version", "verified_at", "policy", "scan_checked_at"],
+      "properties": {
+        "tool_version": { "type": "string", "pattern": "^bepack-registry-verifier/" },
+        "verified_at": { "type": "string", "format": "date-time" },
+        "policy": { "const": "bepack-official-v1" },
+        "scan_checked_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sha256", "analysis_id", "analyzed_at", "malicious", "suspicious"],
+        "properties": {
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "analysis_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "analyzed_at": { "type": "string", "format": "date-time" },
+          "malicious": { "const": 0 },
+          "suspicious": { "const": 0 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "url", "size", "sha256"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[1-9][0-9]{0,19}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "url": { "type": "string", "pattern": "^https://" },
+        "size": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "platform", "runtime", "requires", "game_versions", "loaders", "clients"],
+      "properties": {
+        "target": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "platform": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "runtime": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "requires": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" }
+        },
+        "game_versions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^(?:0|[1-9][0-9]{0,4})(?:\\.(?:0|[1-9][0-9]{0,4})){2,3}$" }
+        },
+        "loaders": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "version"],
+            "properties": {
+              "type": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+              "version": {
+                "oneOf": [
+                  { "type": "null" },
+                  { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" }
+                ]
+              }
+            }
+          }
+        },
+        "clients": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "version", "dependency"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+              "version": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+              "dependency": {
+                "oneOf": [
+                  { "type": "null" },
+                  { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

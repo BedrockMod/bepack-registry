@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bepack.dev/schemas/withdrawal.schema.json",
+  "title": "BePack withdrawal state record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "pack_id", "version", "state", "reason", "created_at", "advisory_url"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "pack_id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)+$", "maxLength": 128 },
+    "version": { "type": "string", "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+    "state": { "enum": ["active", "yanked", "quarantined", "unavailable"] },
+    "reason": { "type": "string", "maxLength": 2000 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "advisory_url": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^https://" }
+      ]
+    }
+  }
+}

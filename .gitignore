@@ -8,3 +8,5 @@ dist/
 .env
 .env.*
 !.env.example
+bridge-data/
+bridge/bridge-data/

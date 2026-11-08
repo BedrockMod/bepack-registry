@@ -1,0 +1,23 @@
+{
+  "name": "@bedrockmod/bepack-registry-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent BePack v1 release verification and registry catalog tooling",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs bridge/test/*.test.mjs",
+    "check": "node scripts/check-pr.mjs",
+    "sync": "node scripts/sync-release.mjs",
+    "verify-release": "node scripts/verify-release.mjs",
+    "build-registry": "node scripts/build-registry.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "bridge": "node bridge/main.mjs",
+    "bridge-test": "node --test bridge/test/*.test.mjs"
+  },
+  "dependencies": {
+    "spdx-expression-parse": "5.0.0"
+  }
+}

@@ -1,0 +1,65 @@
+name: registry-publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sources/**'
+      - 'releases/**'
+      - 'withdrawals/**'
+      - '.github/workflows/registry-publish.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: registry-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the default branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build the catalog worktree
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          catalog_dir="${RUNNER_TEMP}/bepack-catalog"
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "${remote}" catalog >/dev/null 2>&1; then
+            git clone --depth 1 --branch catalog "${remote}" "${catalog_dir}"
+          else
+            mkdir -p "${catalog_dir}"
+            git -C "${catalog_dir}" init
+            git -C "${catalog_dir}" remote add origin "${remote}"
+            git -C "${catalog_dir}" checkout --orphan catalog
+          fi
+          node scripts/build-registry.mjs --out "${catalog_dir}"
+          git -C "${catalog_dir}" config user.name 'bepack-registry-bot[bot]'
+          git -C "${catalog_dir}" config user.email 'bepack-registry-bot[bot]@users.noreply.github.com'
+          git -C "${catalog_dir}" add -- registry.json packs
+          if git -C "${catalog_dir}" diff --cached --quiet; then
+            echo 'Catalog is unchanged'
+            exit 0
+          fi
+          git -C "${catalog_dir}" commit -m "chore: publish registry catalog"
+          git -C "${catalog_dir}" push origin HEAD:catalog

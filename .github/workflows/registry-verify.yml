@@ -1,0 +1,40 @@
+name: registry-verify
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths: ['sources/**', 'releases/**', 'withdrawals/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: registry-verify-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify-records:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # Base SHA is trusted. NEVER replace this with the PR branch or merge ref.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Fetch candidate objects without checkout
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "pull/${PR_NUMBER}/head:refs/registry-candidate"
+      - name: Verify records using trusted code only
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        run: node scripts/check-candidate.mjs --base "${BASE_SHA}" --head "${HEAD_SHA}"
