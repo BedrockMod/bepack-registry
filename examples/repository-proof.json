@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "registry": "bepack-registry",
+  "pack_id": "example.my-pack",
+  "repository_id": "0"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "pack_id": "example.my-pack",
+  "repository": {
+    "id": "0",
+    "full_name": "OWNER/REPOSITORY"
+  },
+  "contact": "https://github.com/OWNER/REPOSITORY/issues",
+  "enabled": true,
+  "proof": {
+    "path": ".bepack-registry.json",
+    "commit": "0000000000000000000000000000000000000000"
+  }
+}
